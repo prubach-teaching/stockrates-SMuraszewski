@@ -1,22 +1,49 @@
 package sgh;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.net.URI;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Scanner;
 
 public class StockData {
 
     public static void getAndProcessChange(String stock) throws IOException {
         String filePath = "data_in/" + stock + ".csv";
-        //TODO HINT: You might need to check if the file doesn't already exist...
-        download("https://query1.finance.yahoo.com/v7/finance/download/" + stock +
-                                "?period1=1554504399&period2=1586126799&interval=1d&events=history",
-                        filePath);
+        
+        File stock_file = new File(filePath);
+        boolean exists = stock_file.exists();
 
-        //TODO Your code here
+        if (exists == false) {
+            download("https://query1.finance.yahoo.com/v7/finance/download/" + stock +
+                            "?period1=1554504399&period2=1586126799&interval=1d&events=history",
+                    filePath);
+        }
+
+        Scanner sc = new Scanner(stock_file);
+        String line = sc.nextLine();
+
+        FileWriter new_stock_file = new FileWriter("data_out/" + stock + ".csv");
+        new_stock_file.write(line + ",Change" + "\n");
+
+        while (sc.hasNextLine()) {
+            
+            line = sc.nextLine();
+            String[] position = line.split(",");
+            
+            float value_from_opening = Float.valueOf(position[1]);
+            float value_from_closing = Float.valueOf(position[4]);
+            
+            float percentage_change = (value_from_closing - value_from_opening) / value_from_opening;
+            new_stock_file.write(line + "," + percentage_change * 100 + "\n");
+        }
+        
+        new_stock_file.close();
+    
     }
 
     public static void download(String url, String fileName) throws IOException {
